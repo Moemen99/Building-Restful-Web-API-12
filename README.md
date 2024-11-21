@@ -348,3 +348,173 @@ YourProject/
 - Implement security policies
 
 This documentation provides a foundation for implementing ASP.NET Core Identity. As your application grows, you can expand upon these basics to implement more advanced features and security measures.
+
+
+
+
+# ASP.NET Core 8 Identity API Endpoints
+
+## Introduction
+.NET 8 introduces a significant improvement in Identity implementation by providing built-in API endpoints. This new feature reduces boilerplate code but currently has limited customization options.
+
+## Key Features
+- Auto-generated authentication endpoints
+- Built-in JWT token generation
+- Automatic refresh token handling
+- Ready-to-use registration and login flows
+
+## Implementation
+
+### 1. Service Registration
+Add the following in your `Program.cs`:
+
+```csharp
+builder.Services.AddIdentityApiEndpoints<ApplicationUser>()
+    .AddEntityFrameworkStores<ApplicationDbContext>();
+```
+
+### 2. Middleware Configuration
+Add after authorization middleware:
+
+```csharp
+app.MapIdentityApi<ApplicationUser>();
+```
+
+## Generated Endpoints
+
+| Endpoint | Method | Purpose |
+|----------|--------|----------|
+| `/register` | POST | User registration |
+| `/login` | POST | User authentication |
+| `/refresh` | POST | Refresh token |
+| `/logout` | POST | User logout |
+
+## Request Examples
+
+### Registration
+```json
+{
+    "email": "user@example.com",
+    "password": "Password123!"
+}
+```
+
+### Login
+```json
+{
+    "email": "user@example.com",
+    "password": "Password123!"
+}
+```
+
+## Authentication Options
+
+```csharp
+builder.Services.AddIdentityApiEndpoints<ApplicationUser>(options => 
+{
+    options.SignIn.RequireConfirmedAccount = false;
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SameSite = SameSiteMode.Strict;
+})
+```
+
+## Current Limitations
+
+### 1. Customization Restrictions
+- Cannot modify default endpoint behavior
+- Limited ability to add custom fields
+- Custom columns (like FirstName, LastName) won't be populated automatically
+
+### 2. Configuration Constraints
+- Fixed token lifetime
+- Predetermined JWT configuration
+- Limited middleware pipeline customization
+
+## Usage Considerations
+
+### Advantages
+1. Quick implementation
+2. Zero boilerplate code
+3. Secure default configuration
+4. Built-in token management
+
+### Disadvantages
+1. Limited customization
+2. No control over token generation
+3. Fixed endpoint routes
+4. Cannot modify response structure
+
+## Example Flow
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant API
+    participant Database
+    
+    Client->>API: POST /register
+    API->>Database: Create User
+    Database-->>API: User Created
+    API-->>Client: Success Response
+    
+    Client->>API: POST /login
+    API->>Database: Validate Credentials
+    Database-->>API: User Valid
+    API-->>Client: JWT + Refresh Token
+```
+
+## Best Practices
+
+1. **Development Environment**
+   - Use for rapid prototyping
+   - Perfect for proof of concept
+   - Ideal for simple applications
+
+2. **Production Environment**
+   - Consider custom implementation for complex requirements
+   - Implement custom endpoints for additional fields
+   - Use traditional Identity setup for full control
+
+3. **Testing**
+   - Test all auto-generated endpoints
+   - Verify token handling
+   - Check refresh token mechanism
+
+## Future Outlook
+
+- .NET 9 preview maintains these limitations
+- Custom implementations still recommended for production applications
+- Microsoft may add customization options in future releases
+
+## Sample Configuration
+
+```csharp
+builder.Services.AddIdentityApiEndpoints<ApplicationUser>(options =>
+{
+    // Authentication settings
+    options.SignIn.RequireConfirmedAccount = false;
+    options.SignIn.RequireConfirmedEmail = false;
+    
+    // Password settings
+    options.Password.RequireDigit = true;
+    options.Password.RequireLowercase = true;
+    options.Password.RequireUppercase = true;
+    options.Password.RequireNonAlphanumeric = true;
+    options.Password.RequiredLength = 8;
+    
+    // Lockout settings
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+    options.Lockout.MaxFailedAccessAttempts = 5;
+    
+    // Cookie settings
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+})
+```
+
+## Conclusion
+While .NET 8's Identity API Endpoints offer a quick and secure way to implement authentication, their current limitations make them more suitable for simple applications or prototypes. For production applications requiring customization, traditional Identity implementation remains the recommended approach.
+
+---
+
+This implementation guide will be updated as Microsoft releases new features and customization options in future versions.
